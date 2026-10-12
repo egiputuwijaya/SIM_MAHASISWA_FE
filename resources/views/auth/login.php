@@ -1,84 +1,206 @@
-<?php ob_start(); ?>
+<?php 
+ob_start(); 
 
-<div class="w-full max-w-md" x-data="{ loading: false }">
-    <div class="glass-panel rounded-3xl p-8 shadow-2xl relative overflow-hidden transform transition-all duration-300 hover:scale-[1.01]">
-        
-        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-600"></div>
+// Pastikan file logo tersedia di public/assets
+$baseDir = dirname(dirname(__DIR__));
+$sourceLogo = $baseDir . '/assets/logoumb.png';
+$pubAssetsDir = $baseDir . '/public/assets';
+$pubLogo = $pubAssetsDir . '/logoumb.png';
 
-        <div class="text-center mb-8">
-            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-600 mb-4 shadow-inner">
-                <i class="fas fa-graduation-cap text-3xl"></i>
+if (!is_dir($pubAssetsDir)) {
+    @mkdir($pubAssetsDir, 0777, true);
+}
+if (file_exists($sourceLogo) && !file_exists($pubLogo)) {
+    @copy($sourceLogo, $pubLogo);
+}
+
+// Data URI untuk logo agar tidak bergantung pada routing atau path URL
+$logoSrc = '';
+if (file_exists($sourceLogo)) {
+    $logoSrc = 'data:image/png;base64,' . base64_encode(file_get_contents($sourceLogo));
+} else {
+    $logoSrc = url('assets/logoumb.png');
+}
+?>
+
+<div class="w-full max-w-5xl grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+
+    <!-- ===== Panel Kiri: Branding ===== -->
+    <div class="hidden lg:block text-center lg:text-left">
+        <div class="inline-flex items-center gap-3 mb-8">
+            <div class="w-16 h-16 rounded-lg bg-white/90 border border-white flex items-center justify-center shadow-lg backdrop-blur p-2">
+                <img src="<?= $logoSrc ?>" alt="Logo UMB" class="w-full h-full object-contain">
             </div>
-            <h1 class="text-3xl font-bold text-gray-800 tracking-tight">SIM Mahasiswa</h1>
-            <p class="text-gray-500 mt-2 text-sm">Masuk untuk mengelola data akademik</p>
+            <div class="text-left">
+                <p class="font-heading font-extrabold text-white text-lg leading-tight">SIM Mahasiswa</p>
+                <p class="text-elegant-300 text-xs font-semibold">Universitas Muhammadiyah Bengkulu</p>
+            </div>
         </div>
 
-        <?php if(isset($error)): ?>
-        <div class="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm flex items-center shadow-sm" x-data="{ show: true }" x-show="show" x-transition>
-            <i class="fas fa-exclamation-circle mr-3 text-red-500"></i>
-            <span class="flex-1"><?= htmlspecialchars($error) ?></span>
-            <button @click="show = false" class="text-red-400 hover:text-red-600"><i class="fas fa-times"></i></button>
-        </div>
-        <?php endif; ?>
+        <h1 class="font-heading font-extrabold text-white text-4xl leading-tight mb-5">
+            Selamat Datang<br>
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-elegant-300 to-white">
+                Kembali
+            </span>
+        </h1>
 
-        <form action="<?= url('/login') ?>" method="POST" @submit="loading = true" class="space-y-5">
-            <div>
-                <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i class="fas fa-user text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
-                    </div>
-                    <input type="text" name="username" id="username" required 
-                        class="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl leading-5 bg-white bg-opacity-70 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all sm:text-sm shadow-sm"
-                        placeholder="Masukkan username" value="<?= isset($_POST['username']) ? htmlspecialchars($_POST['username']) : '' ?>">
-                </div>
+        <p class="text-slate-200/90 text-sm leading-relaxed max-w-md mx-auto lg:mx-0 mb-8">
+            Masuk untuk mengelola data akademik, program studi, dan layanan
+            mahasiswa Universitas Muhammadiyah Bengkulu secara terintegrasi.
+        </p>
+
+        <div class="grid grid-cols-3 gap-4 max-w-md mx-auto lg:mx-0">
+            <div class="glass rounded-xl p-4 text-center">
+                <i class="fa-solid fa-building-columns text-elegant-300 text-lg mb-2"></i>
+                <p class="text-white font-bold text-lg leading-none">5+</p>
+                <p class="text-[11px] text-slate-300 mt-1">Role</p>
             </div>
-
-            <div>
-                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                <div class="relative" x-data="{ show: false }">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i class="fas fa-lock text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
-                    </div>
-                    <input :type="show ? 'text' : 'password'" name="password" id="password" required 
-                        class="block w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl leading-5 bg-white bg-opacity-70 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-all sm:text-sm shadow-sm"
-                        placeholder="••••••••">
-                    <button type="button" @click="show = !show" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none">
-                        <i class="fas" :class="show ? 'fa-eye-slash' : 'fa-eye'"></i>
-                    </button>
-                </div>
+            <div class="glass rounded-xl p-4 text-center">
+                <i class="fa-solid fa-shield-halved text-elegant-300 text-lg mb-2"></i>
+                <p class="text-white font-bold text-lg leading-none">Audit</p>
+                <p class="text-[11px] text-slate-300 mt-1">Log Aktif</p>
             </div>
-
-            <div class="flex items-center justify-between mt-2">
-                <div class="flex items-center">
-                    <input id="remember-me" name="remember-me" type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer">
-                    <label for="remember-me" class="ml-2 block text-sm text-gray-600 cursor-pointer">
-                        Ingat Saya
-                    </label>
-                </div>
-                <div class="text-sm">
-                    <a href="#" class="font-medium text-blue-600 hover:text-blue-500 transition-colors">Lupa sandi?</a>
-                </div>
+            <div class="glass rounded-xl p-4 text-center">
+                <i class="fa-solid fa-lock text-elegant-300 text-lg mb-2"></i>
+                <p class="text-white font-bold text-lg leading-none">Hash</p>
+                <p class="text-[11px] text-slate-300 mt-1">bcrypt</p>
             </div>
-
-            <button type="submit" :disabled="loading" 
-                class="relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-md transform transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed">
-                <span x-show="!loading">Masuk Sekarang</span>
-                <span x-show="loading" class="flex items-center">
-                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Memproses...
-                </span>
-            </button>
-        </form>
-        
-        <div class="mt-8 text-center text-xs text-gray-500">
-            &copy; <?= date('Y') ?> Universitas Muhammadiyah Bengkulu.<br>All rights reserved.
         </div>
     </div>
+
+    <!-- ===== Panel Kanan: Form Login ===== -->
+    <div class="w-full">
+        <div class="bg-white rounded-lg shadow-soft p-7 sm:p-9 border border-slate-100">
+
+            <!-- Logo mobile -->
+            <div class="lg:hidden flex items-center gap-3 mb-7 justify-center">
+                <div class="w-12 h-12 rounded-lg bg-white border border-slate-200 flex items-center justify-center shadow-sm p-1.5">
+                    <img src="<?= $logoSrc ?>" alt="Logo UMB" class="w-full h-full object-contain">
+                </div>
+                <div>
+                    <p class="font-heading font-extrabold text-slate-900 text-sm leading-tight">SIM Mahasiswa</p>
+                    <p class="text-elegant-700 text-[11px] font-semibold">UMB — Login Sistem</p>
+                </div>
+            </div>
+
+            <!-- Judul -->
+            <div class="mb-7">
+                <h2 class="font-heading font-extrabold text-2xl text-slate-900 mb-1.5">Login Sistem</h2>
+                <p class="text-slate-500 text-sm">Masukkan kredensial akun Anda untuk melanjutkan.</p>
+            </div>
+
+            <!-- Flash Success Message (misal setelah logout) -->
+            <?php if (!empty($success)): ?>
+            <div class="flex items-start gap-3 p-4 rounded-xl border bg-green-50 border-green-200 text-green-800 mb-5" role="alert">
+                <i class="fa-solid fa-circle-check text-green-600 mt-0.5 text-base flex-shrink-0"></i>
+                <div class="text-sm font-medium leading-relaxed flex-1"><?= htmlspecialchars($success, ENT_QUOTES, 'UTF-8') ?></div>
+            </div>
+            <?php endif; ?>
+
+            <!-- Flash Error Message -->
+            <?php if (!empty($error)): ?>
+            <div class="flex items-start gap-3 p-4 rounded-xl border bg-red-50 border-red-200 text-red-800 mb-5" role="alert">
+                <i class="fa-solid fa-circle-exclamation text-red-600 mt-0.5 text-base flex-shrink-0"></i>
+                <div class="text-sm font-medium leading-relaxed flex-1"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
+            </div>
+            <?php endif; ?>
+
+            <!-- Form -->
+            <form action="<?= url('/login') ?>" method="POST" autocomplete="on" class="space-y-5">
+
+                <!-- Username -->
+                <div>
+                    <label for="username" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                        Username
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+                            <i class="fa-solid fa-user"></i>
+                        </span>
+                        <input type="text"
+                               id="username"
+                               name="username"
+                               required
+                               maxlength="100"
+                               placeholder="Masukkan username"
+                               value="<?= htmlspecialchars($_POST['username'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                               class="w-full pl-10 pr-4 py-3 rounded-md border border-slate-200 bg-slate-50 text-sm text-slate-900 placeholder-slate-400 focus:border-academic-500 focus:bg-white focus:ring-2 focus:ring-academic-100 transition-colors">
+                    </div>
+                </div>
+
+                <!-- Password -->
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label for="password" class="block text-sm font-semibold text-slate-700">
+                            Password
+                        </label>
+                    </div>
+                    <div class="relative">
+                        <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+                            <i class="fa-solid fa-lock"></i>
+                        </span>
+                        <input type="password"
+                               id="password"
+                               name="password"
+                               required
+                               placeholder="Masukkan password"
+                               class="w-full pl-10 pr-12 py-3 rounded-md border border-slate-200 bg-slate-50 text-sm text-slate-900 placeholder-slate-400 focus:border-academic-500 focus:bg-white focus:ring-2 focus:ring-academic-100 transition-colors">
+                        <button type="button"
+                                id="btn-toggle-password"
+                                aria-label="Tampilkan password"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-academic-700 focus:outline-none transition-colors">
+                            <i class="fa-solid fa-eye" id="icon-eye"></i>
+                            <i class="fa-solid fa-eye-slash hidden" id="icon-eye-slash"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tombol Submit -->
+                <button type="submit"
+                        class="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-md bg-academic-600 hover:bg-academic-700 text-white font-bold text-sm transition-all focus:outline-none focus:ring-4 focus:ring-academic-200 cursor-pointer">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    Masuk ke Sistem
+                </button>
+            </form>
+
+            <!-- Link kembali -->
+            <div class="mt-7 pt-6 border-t border-slate-100 text-center">
+                <a href="<?= url('/') ?>"
+                   class="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-academic-700 font-medium transition-colors">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    Kembali ke Beranda
+                </a>
+            </div>
+
+        </div>
+
+        <!-- Info keamanan -->
+        <p class="text-center text-[11px] text-slate-400 mt-5 leading-relaxed">
+            <i class="fa-solid fa-shield-halved text-elegant-600"></i>
+            Sesi Anda terlindungi. Seluruh aktivitas login dicatat dalam sistem audit.
+        </p>
+    </div>
+
 </div>
+
+<!-- Toggle password visibility -->
+<script>
+(function () {
+    var btn = document.getElementById('btn-toggle-password');
+    var input = document.getElementById('password');
+    var eye = document.getElementById('icon-eye');
+    var eyeSlash = document.getElementById('icon-eye-slash');
+    if (!btn || !input) return;
+
+    btn.addEventListener('click', function () {
+        var isPassword = input.type === 'password';
+        input.type = isPassword ? 'text' : 'password';
+        eye.classList.toggle('hidden', !isPassword);
+        eyeSlash.classList.toggle('hidden', isPassword);
+        btn.setAttribute('aria-label', isPassword ? 'Sembunyikan password' : 'Tampilkan password');
+    });
+})();
+</script>
 
 <?php 
 $content = ob_get_clean(); 

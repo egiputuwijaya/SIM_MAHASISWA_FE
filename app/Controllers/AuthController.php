@@ -6,33 +6,68 @@ class AuthController extends Controller {
         if (isset($_SESSION['token'])) {
             return $this->redirect('/dashboard');
         }
-        $this->view('auth/login');
+        $success = $_SESSION['flash_success'] ?? null;
+        if (!$success && isset($_GET['logout'])) {
+            $success = 'Anda telah berhasil keluar. Sampai jumpa kembali!';
+        }
+        unset($_SESSION['flash_success']);
+
+        $this->view('auth/login', [
+            'success' => $success
+        ]);
     }
 
     public function login() {
-        $username = $_POST['username'] ?? '';
-        $password = $_POST['password'] ?? '';
+        $username = trim($_POST['username'] ?? '');
+        $password = trim($_POST['password'] ?? '');
 
-        $response = ApiClient::post('/login', [
+        if (empty($username) || empty($password)) {
+            return $this->view('auth/login', ['error' => 'Username dan password wajib diisi.']);
+        }
+
+        $response = ApiClient::post('/auth/login', [
             'username' => $username,
             'password' => $password
         ]);
 
-        if (isset($response['status']) && $response['status'] == true) {
-            $_SESSION['token'] = $response['data']['token'] ?? '';
-            $_SESSION['user'] = $response['data']['profil'] ?? [];
+        $token = $response['data']['accessToken'] ?? $response['data']['token'] ?? $response['token'] ?? null;
+        $refreshToken = $response['data']['refreshToken'] ?? null;
+
+        if ((isset($response['success']) && $response['success']) || !empty($token)) {
+            $_SESSION['token'] = $token;
+            if ($refreshToken) {
+                $_SESSION['refreshToken'] = $refreshToken;
+            }
+            
+            // Ambil detail profil pengguna yang login
+            $me = ApiClient::get('/auth/me', [], $token);
+            if (!empty($me['data'])) {
+                $_SESSION['user'] = $me['data'];
+            } else {
+                $_SESSION['user'] = $response['data']['user'] ?? $response['data']['pengguna'] ?? [
+                    'namaLengkap' => $username,
+                    'username'    => $username,
+                    'role'        => 'Admin'
+                ];
+            }
+
             return $this->redirect('/dashboard');
         } else {
-            $error = $response['message'] ?? 'Login failed. Please check your credentials.';
+            $error = $response['error']['message'] ?? $response['message'] ?? 'Username atau password salah.';
             $this->view('auth/login', ['error' => $error]);
         }
     }
 
     public function logout() {
         if (isset($_SESSION['token'])) {
-            ApiClient::post('/logout', [], $_SESSION['token']);
+            ApiClient::post('/auth/logout', [], $_SESSION['token']);
+        }
+        $_SESSION = [];
+        if (session_status() === PHP_SESSION_ACTIVE) {
             session_destroy();
         }
+        session_start();
+        $_SESSION['flash_success'] = 'Anda telah berhasil keluar. Sampai jumpa kembali!';
         return $this->redirect('/login');
     }
 }

@@ -31,6 +31,7 @@
     </script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; }
+        [x-cloak] { display: none !important; }
         .sidebar-item { transition: all 0.2s ease; }
         .sidebar-item:hover {
             color: #1d4ed8;
@@ -53,9 +54,10 @@
 
 <?php
 $userProfile = $_SESSION['user'] ?? [];
-$userName = is_string($userProfile['nama_pengguna'] ?? null) ? $userProfile['nama_pengguna'] : 'Admin SIM Mhs UMB';
-$userRole = is_string($userProfile['role'] ?? null) ? $userProfile['role'] : 'Admin';
-$userInitial = strtoupper(substr($userName, 0, 2)); // e.g. "AD" or "AS"
+$userName = $userProfile['namaLengkap'] ?? $userProfile['nama_lengkap'] ?? $userProfile['nama_pengguna'] ?? $userProfile['username'] ?? 'Administrator';
+$userRole = is_array($userProfile['role'] ?? null) ? ($userProfile['role']['namaRole'] ?? $userProfile['role']['kodeRole'] ?? 'Admin') : ($userProfile['role'] ?? 'Admin');
+$userRoleCode = is_array($userProfile['role'] ?? null) ? strtoupper($userProfile['role']['kodeRole'] ?? $userProfile['role']['namaRole'] ?? 'ADMIN') : strtoupper((string)$userRole);
+$userInitial = strtoupper(substr($userName, 0, 2)); // e.g. "AD" or "OR"
 $currentPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $currentPath = basename($currentPath);
 if ($currentPath == 'public' || $currentPath == 'index.php' || $currentPath == '') $currentPath = 'dashboard';
@@ -72,8 +74,8 @@ if ($currentPath == 'public' || $currentPath == 'index.php' || $currentPath == '
         <div class="h-20 flex items-center border-b border-gray-100 transition-all duration-300" :class="sidebarOpen ? 'px-6' : 'justify-center px-0'">
             <div class="flex items-center gap-3">
                 <!-- Logo Circle -->
-                <div class="w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center shadow shrink-0">
-                    <i class="fas fa-university"></i>
+                <div class="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm shrink-0 p-1">
+                    <img src="<?= url('assets/logoumb.png') ?>" alt="Logo UMB" class="w-full h-full object-contain">
                 </div>
                 <div class="flex flex-col whitespace-nowrap overflow-hidden transition-all duration-300" :class="sidebarOpen ? 'w-auto opacity-100' : 'w-0 opacity-0'">
                     <span class="text-[15px] font-bold text-gray-800 leading-tight">SIM UMB</span>
@@ -83,10 +85,14 @@ if ($currentPath == 'public' || $currentPath == 'index.php' || $currentPath == '
         </div>
 
         <div class="flex-1 overflow-y-auto py-4 space-y-2 overflow-x-hidden">
+            <!-- Dashboard (Semua Role) -->
             <a href="<?= url('/dashboard') ?>" class="sidebar-item <?= strpos($currentPath, 'dashboard') !== false ? 'active' : '' ?> flex items-center py-2.5 rounded-lg text-gray-600 text-[14px]" :class="sidebarOpen ? 'px-3 mx-3 gap-3' : 'justify-center mx-2'">
-                <i class="fas fa-tachometer-alt w-5 text-center sidebar-icon text-sm shrink-0"></i>
+                <i class="fas fa-gauge w-5 text-center sidebar-icon text-sm shrink-0"></i>
                 <span :class="{'hidden': !sidebarOpen}" class="whitespace-nowrap">Dashboard</span>
             </a>
+
+            <?php if ($userRoleCode === 'ADMIN'): ?>
+            <!-- Menu Khusus Admin -->
             <a href="<?= url('/profil-universitas') ?>" class="sidebar-item <?= strpos($currentPath, 'profil-universitas') !== false ? 'active' : '' ?> flex items-center py-2.5 rounded-lg text-gray-600 text-[14px]" :class="sidebarOpen ? 'px-3 mx-3 gap-3' : 'justify-center mx-2'">
                 <i class="fas fa-building w-5 text-center sidebar-icon text-sm shrink-0"></i>
                 <span :class="{'hidden': !sidebarOpen}" class="whitespace-nowrap">Profil Universitas</span>
@@ -95,24 +101,49 @@ if ($currentPath == 'public' || $currentPath == 'index.php' || $currentPath == '
                 <i class="fas fa-user-friends w-5 text-center sidebar-icon text-sm shrink-0"></i>
                 <span :class="{'hidden': !sidebarOpen}" class="whitespace-nowrap">Data Pengguna</span>
             </a>
-            <a href="#" class="sidebar-item flex items-center py-2.5 rounded-lg text-gray-600 text-[14px]" :class="sidebarOpen ? 'px-3 mx-3 gap-3' : 'justify-center mx-2'">
+            <a href="<?= url('/fakultas') ?>" class="sidebar-item <?= strpos($currentPath, 'fakultas') !== false ? 'active' : '' ?> flex items-center py-2.5 rounded-lg text-gray-600 text-[14px]" :class="sidebarOpen ? 'px-3 mx-3 gap-3' : 'justify-center mx-2'">
                 <i class="fas fa-landmark w-5 text-center sidebar-icon text-sm shrink-0"></i>
                 <span :class="{'hidden': !sidebarOpen}" class="whitespace-nowrap">Fakultas</span>
             </a>
-            <a href="#" class="sidebar-item flex items-center py-2.5 rounded-lg text-gray-600 text-[14px]" :class="sidebarOpen ? 'px-3 mx-3 gap-3' : 'justify-center mx-2'">
+            <a href="<?= url('/program-studi') ?>" class="sidebar-item <?= strpos($currentPath, 'program-studi') !== false ? 'active' : '' ?> flex items-center py-2.5 rounded-lg text-gray-600 text-[14px]" :class="sidebarOpen ? 'px-3 mx-3 gap-3' : 'justify-center mx-2'">
                 <i class="fas fa-graduation-cap w-5 text-center sidebar-icon text-sm shrink-0"></i>
                 <span :class="{'hidden': !sidebarOpen}" class="whitespace-nowrap">Program Studi</span>
             </a>
-            <a href="<?= url('/mahasiswa') ?>" class="sidebar-item <?= strpos($currentPath, 'mahasiswa') !== false ? 'active' : '' ?> flex items-center py-2.5 rounded-lg text-gray-600 text-[14px]" :class="sidebarOpen ? 'px-3 mx-3 gap-3' : 'justify-center mx-2'">
+            <?php endif; ?>
+
+            <?php if (!in_array($userRoleCode, ['REKTORAT', 'DEKANAT'])): ?>
+            <!-- Data Mahasiswa (Admin, BAAK, Prodi, Dosen) -->
+            <a href="<?= url('/mahasiswa') ?>" class="sidebar-item <?= strpos($currentPath, 'mahasiswa') !== false && strpos($currentPath, 'laporan') === false ? 'active' : '' ?> flex items-center py-2.5 rounded-lg text-gray-600 text-[14px]" :class="sidebarOpen ? 'px-3 mx-3 gap-3' : 'justify-center mx-2'">
                 <i class="fas fa-users w-5 text-center sidebar-icon text-sm shrink-0"></i>
                 <span :class="{'hidden': !sidebarOpen}" class="whitespace-nowrap">Data Mahasiswa</span>
             </a>
-            <a href="#" class="sidebar-item flex items-center py-2.5 rounded-lg text-gray-600 text-[14px]" :class="sidebarOpen ? 'px-3 mx-3 gap-3' : 'justify-center mx-2'">
+            <?php endif; ?>
+
+            <!-- Laporan Mahasiswa (Rektorat, Dekanat, Admin, BAAK, dll) -->
+            <a href="<?= url('/laporan') ?>" class="sidebar-item <?= (strpos($currentPath, 'laporan') !== false || strpos($currentPath, 'rekapitulasi') !== false) ? 'active' : '' ?> flex items-center py-2.5 rounded-lg text-gray-600 text-[14px]" :class="sidebarOpen ? 'px-3 mx-3 gap-3' : 'justify-center mx-2'">
+                <i class="fas fa-file-lines w-5 text-center sidebar-icon text-sm shrink-0"></i>
+                <span :class="{'hidden': !sidebarOpen}" class="whitespace-nowrap">Laporan Mahasiswa</span>
+            </a>
+
+            <?php if (in_array($userRoleCode, ['DEKANAT', 'ADMIN_DEKANAT', 'KAPRODI', 'ADMIN_PRODI', 'REKTORAT', 'ADMIN'])): ?>
+            <!-- Daftar Dosen (Dekanat, Kaprodi, Rektorat, Admin) -->
+            <a href="<?= url('/dosen') ?>" class="sidebar-item <?= strpos($currentPath, 'dosen') !== false ? 'active' : '' ?> flex items-center py-2.5 rounded-lg text-gray-600 text-[14px]" :class="sidebarOpen ? 'px-3 mx-3 gap-3' : 'justify-center mx-2'">
+                <i class="fas fa-chalkboard-user w-5 text-center sidebar-icon text-sm shrink-0"></i>
+                <span :class="{'hidden': !sidebarOpen}" class="whitespace-nowrap">Daftar Dosen</span>
+            </a>
+            <?php endif; ?>
+
+            <?php if ($userRoleCode === 'ADMIN'): ?>
+            <!-- Audit Log (Admin) -->
+            <a href="<?= url('/audit-log') ?>" class="sidebar-item <?= strpos($currentPath, 'audit-log') !== false ? 'active' : '' ?> flex items-center py-2.5 rounded-lg text-gray-600 text-[14px]" :class="sidebarOpen ? 'px-3 mx-3 gap-3' : 'justify-center mx-2'">
                 <i class="fas fa-history w-5 text-center sidebar-icon text-sm shrink-0"></i>
                 <span :class="{'hidden': !sidebarOpen}" class="whitespace-nowrap">Audit Log</span>
             </a>
-            <a href="#" class="sidebar-item flex items-center py-2.5 rounded-lg text-gray-600 text-[14px]" :class="sidebarOpen ? 'px-3 mx-3 gap-3' : 'justify-center mx-2'">
-                <i class="fas fa-cog w-5 text-center sidebar-icon text-sm shrink-0"></i>
+            <?php endif; ?>
+
+            <!-- Pengaturan Akun (Semua Role) -->
+            <a href="<?= url('/pengaturan-akun') ?>" class="sidebar-item <?= strpos($currentPath, 'pengaturan-akun') !== false ? 'active' : '' ?> flex items-center py-2.5 rounded-lg text-gray-600 text-[14px]" :class="sidebarOpen ? 'px-3 mx-3 gap-3' : 'justify-center mx-2'">
+                <i class="fas fa-user-gear w-5 text-center sidebar-icon text-sm shrink-0"></i>
                 <span :class="{'hidden': !sidebarOpen}" class="whitespace-nowrap">Pengaturan Akun</span>
             </a>
         </div>

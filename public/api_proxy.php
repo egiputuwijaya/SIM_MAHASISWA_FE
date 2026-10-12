@@ -1,20 +1,70 @@
 <?php
-// Script ini digunakan di Frontend untuk memanggil (proxy) Backend secara lokal 
-// tanpa mengubah kode Backend sama sekali dan tanpa memindahkan folder.
+// API Proxy mengarahkan request langsung ke API online Vercel
+$targetBaseUrl = 'https://sim-mhs-api.vercel.app/api/v1';
 
-if (!isset($_GET['endpoint'])) {
+$endpoint = $_GET['endpoint'] ?? '';
+if (empty($endpoint)) {
     http_response_code(400);
-    echo json_encode(['error' => 'Endpoint missing']);
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'message' => 'Endpoint missing']);
     exit;
 }
 
-// 1. Ubah variabel $_SERVER['REQUEST_URI'] menjadi persis seperti yang diharapkan router Backend
-// Misalnya: /api/v1/login
-$endpoint = $_GET['endpoint'];
-$_SERVER['REQUEST_URI'] = $endpoint;
+$url = $targetBaseUrl . $endpoint;
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
-// 2. Berpindah (Change Directory) ke folder Backend agar include config dll berjalan normal
-chdir(__DIR__ . '/../../SIM_MAHASISWA_BE');
+$headers = [];
+$incomingHeaders = function_exists('getallheaders') ? getallheaders() : [];
+foreach ($incomingHeaders as $name => $value) {
+    if (!in_array(strtolower($name), ['host', 'content-length'])) {
+        $headers[] = "$name: $value";
+    }
+}
 
-// 3. Masukkan script index.php dari Backend untuk memproses request
-require __DIR__ . '/../../SIM_MAHASISWA_BE/index.php';
+$input = in_array($method, ['POST', 'PUT', 'PATCH']) ? file_get_contents('php://input') : null;
+
+if (function_exists('curl_init')) {
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    if ($input !== null) {
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $input);
+    }
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+} else {
+    $options = [
+        'http' => [
+            'method'        => $method,
+            'header'        => implode("\r\n", $headers),
+            'ignore_errors' => true,
+            'timeout'       => 30
+        ],
+        'ssl' => [
+            'verify_peer'      => false,
+            'verify_peer_name' => false
+        ]
+    ];
+    if ($input !== null) {
+        $options['http']['content'] = $input;
+    }
+    $context = stream_context_create($options);
+    $response = @file_get_contents($url, false, $context);
+    $httpCode = 200;
+    if (isset($http_response_header)) {
+        foreach ($http_response_header as $hdr) {
+            if (preg_match('/^HTTP\/\d\.\d\s+(\d+)/i', $hdr, $m)) {
+                $httpCode = (int)$m[1];
+            }
+        }
+    }
+}
+
+http_response_code($httpCode ?: 200);
+header('Content-Type: application/json');
+echo $response;

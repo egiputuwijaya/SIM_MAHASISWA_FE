@@ -4,24 +4,60 @@ require_once 'Controller.php';
 class ProfilController extends Controller {
     public function index() {
         if (!isset($_SESSION['token'])) return $this->redirect('/login');
-        $this->view('profil/index', ['title' => 'Profil Universitas']);
+        
+        $response = ApiClient::get('/universitas', [], $_SESSION['token']);
+        $univ = [];
+        if (!empty($response['data'])) {
+            $univ = isset($response['data'][0]) ? $response['data'][0] : $response['data'];
+        }
+
+        $this->view('profil/index', [
+            'title' => 'Profil Universitas',
+            'univ'  => $univ
+        ]);
     }
 
     public function edit() {
         if (!isset($_SESSION['token'])) return $this->redirect('/login');
-        $this->view('profil/edit', ['title' => 'Edit Profil Universitas']);
+
+        $response = ApiClient::get('/universitas', [], $_SESSION['token']);
+        $univ = [];
+        if (!empty($response['data'])) {
+            $univ = isset($response['data'][0]) ? $response['data'][0] : $response['data'];
+        }
+
+        $this->view('profil/edit', [
+            'title' => 'Edit Profil Universitas',
+            'univ'  => $univ
+        ]);
     }
 
     public function update() {
         if (!isset($_SESSION['token'])) return $this->redirect('/login');
         
-        // Coba memanggil API yang sebenarnya tidak ada di Backend
-        // Menggunakan helper ApiClient ke endpoint yang tidak ada (karena backend belum memilikinya)
-        $response = ApiClient::post('/universitas/update', $_POST, $_SESSION['token']);
+        // Ambil ID institusi
+        $id = $_POST['id'] ?? 1;
+
+        $payload = [
+            'namaUniversitas' => $_POST['nama_universitas'] ?? $_POST['namaUniversitas'] ?? '',
+            'slogan'          => $_POST['slogan'] ?? '',
+            'alamat'          => $_POST['alamat'] ?? '',
+            'kota'            => $_POST['kota'] ?? '',
+            'provinsi'        => $_POST['provinsi'] ?? '',
+            'kodePos'         => $_POST['kode_pos'] ?? $_POST['kodePos'] ?? '',
+            'telepon'         => $_POST['telepon'] ?? '',
+            'email'           => $_POST['email'] ?? '',
+            'website'         => $_POST['website'] ?? ''
+        ];
         
-        // Kita tangkap errornya untuk diberitahukan ke UI
-        $_SESSION['flash_error'] = "API Endpoint '/api/v1/universitas/update' belum dibuat di sisi Backend!";
+        $response = ApiClient::patch("/universitas/{$id}", $payload, $_SESSION['token']);
         
-        return $this->redirect('/profil-universitas/edit');
+        if (isset($response['success']) && $response['success']) {
+            $_SESSION['flash_success'] = "Profil universitas berhasil diperbarui!";
+            return $this->redirect('/profil-universitas');
+        } else {
+            $_SESSION['flash_error'] = $response['error']['message'] ?? $response['message'] ?? 'Gagal memperbarui profil universitas.';
+            return $this->redirect('/profil-universitas/edit');
+        }
     }
 }
