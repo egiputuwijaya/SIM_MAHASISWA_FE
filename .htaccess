@@ -1,0 +1,39 @@
+# ==============================================================================
+# HTACCESS ROOT (Untuk Hosting InfinityFree / cPanel Apache)
+# Melindungi folder sensitif dan mengarahkan lalu lintas ke folder public
+# ==============================================================================
+
+# 1. Nonaktifkan penjelajahan direktori (Directory Browsing)
+# Ini mencegah pengunjung melihat daftar folder app, resources, routes, dll
+Options -Indexes
+
+# 2. Lindungi folder sensitif dari akses langsung browser (403 Forbidden)
+<IfModule mod_authz_core.c>
+    # Apache 2.4+
+    <FilesMatch "^\.">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+<IfModule !mod_authz_core.c>
+    # Apache 2.2
+    <FilesMatch "^\.">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Blokir akses langsung ke folder internal aplikasi melalui URL
+    RewriteRule ^(app|resources|routes|\.git|\.env) - [F,L,NC]
+
+    # Arahkan root domain langsung ke public/
+    RewriteRule ^$ public/ [L]
+
+    # Teruskan request yang bukan file/folder root ke folder public/
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ public/$1 [L,QSA]
+</IfModule>

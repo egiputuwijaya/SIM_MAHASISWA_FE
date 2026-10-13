@@ -1,6 +1,11 @@
 <?php
 return [
-    ['method' => 'GET', 'path' => '/', 'controller' => 'AuthController', 'action' => 'index'],
+    // Halaman publik (tanpa login)
+    ['method' => 'GET', 'path' => '/', 'controller' => 'HomeController', 'action' => 'index'],
+    ['method' => 'GET', 'path' => '/beranda', 'controller' => 'HomeController', 'action' => 'index'],
+    ['method' => 'GET', 'path' => '/fakultas-prodi', 'controller' => 'HomeController', 'action' => 'fakultasProdi'],
+    ['method' => 'GET', 'path' => '/about-dev', 'controller' => 'HomeController', 'action' => 'aboutDev'],
+
     ['method' => 'GET', 'path' => '/login', 'controller' => 'AuthController', 'action' => 'index'],
     ['method' => 'POST', 'path' => '/login', 'controller' => 'AuthController', 'action' => 'login'],
     ['method' => 'GET', 'path' => '/logout', 'controller' => 'AuthController', 'action' => 'logout'],

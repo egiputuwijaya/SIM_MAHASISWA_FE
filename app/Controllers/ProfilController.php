@@ -9,6 +9,8 @@ class ProfilController extends Controller {
         $univ = [];
         if (!empty($response['data'])) {
             $univ = isset($response['data'][0]) ? $response['data'][0] : $response['data'];
+            require_once __DIR__ . '/HomeController.php';
+            HomeController::saveProfileCache($univ);
         }
 
         $this->view('profil/index', [
@@ -53,6 +55,10 @@ class ProfilController extends Controller {
         $response = ApiClient::patch("/universitas/{$id}", $payload, $_SESSION['token']);
         
         if (isset($response['success']) && $response['success']) {
+            unset($_SESSION['landing_cache']);
+            require_once __DIR__ . '/HomeController.php';
+            $currentCache = HomeController::loadProfileCache() ?: [];
+            HomeController::saveProfileCache(array_merge($currentCache, $payload));
             $_SESSION['flash_success'] = "Profil universitas berhasil diperbarui!";
             return $this->redirect('/profil-universitas');
         } else {
@@ -61,3 +67,4 @@ class ProfilController extends Controller {
         }
     }
 }
+
